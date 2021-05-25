@@ -1,0 +1,70 @@
+name: build
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/build.yml'
+      - 'transport/internet/tcp/sockopt_darwin.go'
+  schedule:
+    - cron: '3 * * * *'
+    
+jobs:        
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - id: check_version
+        run: |
+          upstream_version=$(basename $(curl -Ls -o /dev/null -w %{url_effective} https://github.com/v2fly/v2ray-core/releases/latest))
+          release_version=$(basename $(curl -Ls -o /dev/null -w %{url_effective} https://github.com/goofw/v2ray/releases/latest))
+          [ "$upstream_version" != "$release_version" ] && echo '::set-output name=RUN::true' || echo '::set-output name=RUN::false'
+          echo "VERSION=$upstream_version" >> $GITHUB_ENV
+      
+      - if: steps.check_version.outputs.RUN == 'true'
+        uses: actions/setup-go@v2
+        with:
+          go-version: '^1.16.3'
+      
+      - if: steps.check_version.outputs.RUN == 'true'
+        uses: actions/checkout@v2
+        with:
+          repository: v2fly/v2ray-core
+          ref: ${{ env.VERSION }}
+          
+      - if: steps.check_version.outputs.RUN == 'true'
+        uses: actions/checkout@v2
+        with:
+          path: patch
+          
+      - if: steps.check_version.outputs.RUN == 'true'
+        run: |
+          cp patch/transport/internet/tcp/sockopt_darwin.go transport/internet/tcp/sockopt_darwin.go
+          sed -i '1s/$/,!darwin/' transport/internet/tcp/sockopt_other.go
+          CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o v2ray -trimpath -ldflags "-s -w -buildid=" ./main
+          
+          wget https://github.com/v2fly/v2ray-core/releases/download/$VERSION/v2ray-macos-64.zip
+          zip -9vr v2ray-macos-64.zip v2ray
+          
+      - if: steps.check_version.outputs.RUN == 'true'
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ env.VERSION }}
+          release_name: ${{ env.VERSION }}
+          
+      - if: steps.check_version.outputs.RUN == 'true'
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: v2ray-macos-64.zip
+          asset_name: v2ray-macos-64.zip
+          asset_content_type: application/zip
+      
+      - uses: Mattraks/delete-workflow-runs@main
+        with:
+          retain_days: 1
+          keep_minimum_runs: 5
