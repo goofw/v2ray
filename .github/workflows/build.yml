@@ -16,6 +16,7 @@ jobs:
       - id: check_version
         run: |
           upstream_version=$(basename $(curl -Ls -o /dev/null -w %{url_effective} https://github.com/v2fly/v2ray-core/releases/latest))
+          upstream_version=v5.0.1
           release_version=$(basename $(curl -Ls -o /dev/null -w %{url_effective} https://github.com/goofw/v2ray/releases/latest))
           [ "$upstream_version" != "$release_version" ] && echo '::set-output name=RUN::true' || echo '::set-output name=RUN::false'
           echo "VERSION=$upstream_version" >> $GITHUB_ENV
@@ -23,7 +24,7 @@ jobs:
       - if: steps.check_version.outputs.RUN == 'true'
         uses: actions/setup-go@v2
         with:
-          go-version: '^1.16.3'
+          go-version: ^1.17
       
       - if: steps.check_version.outputs.RUN == 'true'
         uses: actions/checkout@v2
