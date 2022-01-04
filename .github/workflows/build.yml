@@ -13,10 +13,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      #- uses: Mattraks/delete-workflow-runs@main
-      #  with:
-      #    retain_days: 1
-      #    keep_minimum_runs: 5
+      - uses: Mattraks/delete-workflow-runs@main
+        with:
+          retain_days: 1
+          keep_minimum_runs: 5
           
       - id: check_version
         run: |
