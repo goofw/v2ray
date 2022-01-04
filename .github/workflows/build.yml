@@ -17,6 +17,8 @@ jobs:
         run: |
           upstream_version=$(basename $(curl -Ls -o /dev/null -w %{url_effective} https://github.com/v2fly/v2ray-core/releases/latest))
           upstream_version=v5.0.1
+          xupstream_version=$(jq -r 'map(select(.prerelease)) | first | .tag_name' <<< $(curl --silent https://api.github.com/repos/v2fly/v2ray-core/releases))
+          echo $xupstream_version
           release_version=$(basename $(curl -Ls -o /dev/null -w %{url_effective} https://github.com/goofw/v2ray/releases/latest))
           [ "$upstream_version" != "$release_version" ] && echo '::set-output name=RUN::true' || echo '::set-output name=RUN::false'
           echo "VERSION=$upstream_version" >> $GITHUB_ENV
@@ -42,7 +44,6 @@ jobs:
           cp patch/transport/internet/tcp/sockopt_darwin.go transport/internet/tcp/sockopt_darwin.go
           sed -i '1s/$/ \&\& !darwin/' transport/internet/tcp/sockopt_other.go
           sed -i '2s/$/,!darwin/' transport/internet/tcp/sockopt_other.go
-          cat transport/internet/tcp/sockopt_other.go
           CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o v2ray -trimpath -ldflags "-s -w -buildid=" ./main
           
           wget https://github.com/v2fly/v2ray-core/releases/download/$VERSION/v2ray-macos-64.zip
