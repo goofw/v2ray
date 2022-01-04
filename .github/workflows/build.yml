@@ -13,12 +13,15 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      #- uses: Mattraks/delete-workflow-runs@main
+      #  with:
+      #    retain_days: 1
+      #    keep_minimum_runs: 5
+          
       - id: check_version
         run: |
           upstream_version=$(basename $(curl -Ls -o /dev/null -w %{url_effective} https://github.com/v2fly/v2ray-core/releases/latest))
-          upstream_version=v5.0.1
-          xupstream_version=$(jq -r 'map(select(.prerelease)) | first | .tag_name' <<< $(curl --silent https://api.github.com/repos/v2fly/v2ray-core/releases))
-          echo $xupstream_version
+          upstream_version=$(jq -r 'map(select(.prerelease)) | first | .tag_name' <<< $(curl --silent https://api.github.com/repos/v2fly/v2ray-core/releases))
           release_version=$(basename $(curl -Ls -o /dev/null -w %{url_effective} https://github.com/goofw/v2ray/releases/latest))
           [ "$upstream_version" != "$release_version" ] && echo '::set-output name=RUN::true' || echo '::set-output name=RUN::false'
           echo "VERSION=$upstream_version" >> $GITHUB_ENV
@@ -67,8 +70,3 @@ jobs:
           asset_path: v2ray-macos-64.zip
           asset_name: v2ray-macos-64.zip
           asset_content_type: application/zip
-      
-      - uses: Mattraks/delete-workflow-runs@main
-        with:
-          retain_days: 1
-          keep_minimum_runs: 5
