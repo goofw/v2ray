@@ -42,6 +42,7 @@ jobs:
           cp patch/transport/internet/tcp/sockopt_darwin.go transport/internet/tcp/sockopt_darwin.go
           sed -i '1s/$/ && !darwin/' transport/internet/tcp/sockopt_other.go
           sed -i '2s/$/,!darwin/' transport/internet/tcp/sockopt_other.go
+          cat transport/internet/tcp/sockopt_other.go
           CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o v2ray -trimpath -ldflags "-s -w -buildid=" ./main
           
           wget https://github.com/v2fly/v2ray-core/releases/download/$VERSION/v2ray-macos-64.zip
